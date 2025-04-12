@@ -22,6 +22,9 @@ load_dotenv()
 DATA_DIR = "data/pdfs"
 PROMPT_DIR = "app/prompts"
 VECTOR_DIR = "vectorstore"
+CHUNK_SIZE = int(os.getenv("CHUNK_SIZE", 512))
+CHUNK_OVERLAP = int(os.getenv("CHUNK_OVERLAP", 50))
+PROMPT_VERSION = os.getenv("PROMPT_VERSION", "v1_asistente_cocina")
 
 def load_documents(path=DATA_DIR):
     docs = []
@@ -31,7 +34,10 @@ def load_documents(path=DATA_DIR):
             docs.extend(loader.load())
     return docs
 
-def save_vectorstore(chunk_size=512, chunk_overlap=50, persist_path=VECTOR_DIR):
+def save_vectorstore(chunk_size=1024, chunk_overlap=100, persist_path=VECTOR_DIR):
+    chunk_size = CHUNK_SIZE
+    chunk_overlap = CHUNK_OVERLAP
+    print(chunk_size,chunk_overlap)
     docs = load_documents()
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
@@ -50,6 +56,8 @@ def save_vectorstore(chunk_size=512, chunk_overlap=50, persist_path=VECTOR_DIR):
         mlflow.set_tag("vectorstore", persist_path)
 
 def load_vectorstore(chunk_size=512, chunk_overlap=50):
+    chunk_size = CHUNK_SIZE
+    chunk_overlap = CHUNK_OVERLAP
     docs = load_documents()
     splitter = RecursiveCharacterTextSplitter(
         chunk_size=chunk_size,
@@ -72,6 +80,7 @@ def load_prompt(version="v1_asistente_rrhh"):
     return PromptTemplate(input_variables=["context", "question"], template=prompt_text)
 
 def build_chain(vectordb, prompt_version="v1_asistente_rrhh"):
+    prompt_version = PROMPT_VERSION
     prompt = load_prompt(prompt_version)
     retriever = vectordb.as_retriever()
     return ConversationalRetrievalChain.from_llm(
